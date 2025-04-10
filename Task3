@@ -1,0 +1,63 @@
+-- Create the ecommerce_data table
+CREATE TABLE ecommerce_data (
+    InvoiceNo VARCHAR(20),
+    StockCode VARCHAR(20),
+    Description TEXT,
+    Quantity INT,
+    InvoiceDate DATETIME,
+    UnitPrice DECIMAL(10, 2),
+    CustomerID INT,
+    Country VARCHAR(100)
+);
+
+-- Load CSV data (adjust path accordingly)
+-- LOAD DATA INFILE '/path/to/data.csv'
+-- INTO TABLE ecommerce_data
+-- FIELDS TERMINATED BY ',' 
+-- ENCLOSED BY '"'
+-- LINES TERMINATED BY '\n'
+-- IGNORE 1 ROWS
+-- (InvoiceNo, StockCode, Description, Quantity, @InvoiceDate, UnitPrice, CustomerID, Country)
+-- SET InvoiceDate = STR_TO_DATE(@InvoiceDate, '%m/%d/%Y %H:%i');
+
+-- 1. Top 5 Selling Products
+SELECT Description, SUM(Quantity) AS TotalSold
+FROM ecommerce_data
+GROUP BY Description
+ORDER BY TotalSold DESC
+LIMIT 5;
+
+-- 2. Revenue by Country
+SELECT Country, ROUND(SUM(Quantity * UnitPrice), 2) AS Revenue
+FROM ecommerce_data
+GROUP BY Country
+ORDER BY Revenue DESC;
+
+-- 3. Average Revenue per User
+SELECT ROUND(SUM(Quantity * UnitPrice) / COUNT(DISTINCT CustomerID), 2) AS AvgRevenuePerUser
+FROM ecommerce_data;
+
+-- 4. Monthly Sales Trend
+SELECT DATE_FORMAT(InvoiceDate, '%Y-%m') AS Month, SUM(Quantity * UnitPrice) AS Revenue
+FROM ecommerce_data
+GROUP BY Month
+ORDER BY Month;
+
+-- 5. Customers with More Than One Order
+CREATE VIEW repeat_customers AS
+SELECT CustomerID, COUNT(DISTINCT InvoiceNo) AS Orders
+FROM ecommerce_data
+GROUP BY CustomerID
+HAVING Orders > 1;
+
+-- 6. Products with the Highest Revenue
+SELECT Description, ROUND(SUM(Quantity * UnitPrice), 2) AS TotalRevenue
+FROM ecommerce_data
+GROUP BY Description
+ORDER BY TotalRevenue DESC
+LIMIT 10;
+
+-- 7. Handling NULL Customer IDs
+SELECT *
+FROM ecommerce_data
+WHERE CustomerID IS NULL;
